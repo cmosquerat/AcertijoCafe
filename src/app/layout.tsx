@@ -19,6 +19,11 @@ const roboto = Roboto({
 export const metadata: Metadata = {
   title: "Acertijo Café - En Construcción",
   description: "Próximamente estaremos listos para servirte el mejor café",
+  icons: {
+    icon: "/SimboloBlanco.svg",
+    shortcut: "/SimboloBlanco.svg",
+    apple: "/SimboloBlanco.svg",
+  },
 };
 
 export default function RootLayout({
