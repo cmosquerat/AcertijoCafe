@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { QRCodeSVG } from "qrcode.react";
 import { useRouter } from "next/navigation";
@@ -9,13 +9,17 @@ import Image from "next/image";
 interface SurveyData {
   // Ubicación y datos básicos
   barrio: string;
+  barrioOtro: string;
   edad: string;
   ocupacion: string;
 
   // Hábitos de consumo
   frecuencia: string;
   tipoCafe: string;
+  cafeEspecialidad: string;
+  metodoEspecialidad: string;
   intensidad: string;
+  presentacionCafe: string;
   temperatura: string;
   tipoLeche: string;
 
@@ -38,11 +42,15 @@ interface SurveyData {
 
 const initialData: SurveyData = {
   barrio: "",
+  barrioOtro: "",
   edad: "",
   ocupacion: "",
   frecuencia: "",
   tipoCafe: "",
+  cafeEspecialidad: "",
+  metodoEspecialidad: "",
   intensidad: "",
+  presentacionCafe: "",
   temperatura: "",
   tipoLeche: "",
   elecciones: [],
@@ -90,6 +98,8 @@ export default function EncuestaWizard() {
   const [isComplete, setIsComplete] = useState(false);
   const [qrCode, setQrCode] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const wizardRef = useRef<HTMLDivElement>(null);
+  const isInitialMount = useRef(true);
 
   const updateData = (field: keyof SurveyData, value: any) => {
     setData((prev) => ({ ...prev, [field]: value }));
@@ -105,6 +115,27 @@ export default function EncuestaWizard() {
     setCurrentStep((prev) => (prev > 0 ? prev - 1 : prev));
   };
 
+  // Scroll al inicio cuando cambia el paso (solo después del montaje inicial)
+  useEffect(() => {
+    // No hacer scroll en el montaje inicial
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+
+    // Pequeño delay para que la animación de cambio de paso comience
+    const timer = setTimeout(() => {
+      if (wizardRef.current) {
+        wizardRef.current.scrollIntoView({ 
+          behavior: 'smooth', 
+          block: 'start' 
+        });
+      }
+    }, 100);
+
+    return () => clearTimeout(timer);
+  }, [currentStep]);
+
   const createHeadersIfNeeded = async (): Promise<boolean> => {
     try {
       // Crear los encabezados como primera fila
@@ -117,7 +148,10 @@ export default function EncuestaWizard() {
         ocupacion: "ocupacion",
         frecuencia: "frecuencia",
         tipoCafe: "tipoCafe",
+        cafeEspecialidad: "cafeEspecialidad",
+        metodoEspecialidad: "metodoEspecialidad",
         intensidad: "intensidad",
+        presentacionCafe: "presentacionCafe",
         temperatura: "temperatura",
         tipoLeche: "tipoLeche",
         elecciones: "elecciones",
@@ -172,12 +206,15 @@ export default function EncuestaWizard() {
       const dataToSend: Record<string, string> = {
         codigo: uniqueCode,
         fecha: new Date().toISOString(),
-        barrio: data.barrio || "",
+        barrio: data.barrio === "Otro" ? (data.barrioOtro || "") : (data.barrio || ""),
         edad: data.edad || "",
         ocupacion: data.ocupacion || "",
         frecuencia: data.frecuencia || "",
         tipoCafe: data.tipoCafe || "",
+        cafeEspecialidad: data.cafeEspecialidad || "",
+        metodoEspecialidad: data.metodoEspecialidad || "",
         intensidad: data.intensidad || "",
+        presentacionCafe: data.presentacionCafe || "",
         temperatura: data.temperatura || "",
         tipoLeche: data.tipoLeche || "",
         elecciones: data.elecciones.length > 0 ? data.elecciones.join(", ") : "",
@@ -303,7 +340,7 @@ export default function EncuestaWizard() {
     currentStep > 0 && currentStep < steps.length - 1;
 
   return (
-    <div className="w-full">
+    <div ref={wizardRef} className="w-full">
       {/* Barra de progreso */}
       {isIntermediateStep && (
         <div className="mb-8">
@@ -352,7 +389,7 @@ export default function EncuestaWizard() {
               >
                 <motion.button
                   onClick={handleNext}
-                  className="group relative flex w-full items-center justify-center gap-5 overflow-hidden rounded-3xl bg-gradient-to-br from-orange via-[#e66a1f] to-[#d45a0f] px-12 py-8 font-body text-xl font-bold tracking-tight text-white shadow-[0_20px_60px_rgba(251,146,60,0.5)] transition-all duration-700 hover:shadow-[0_30px_80px_rgba(251,146,60,0.6)] sm:px-16 sm:py-10 sm:text-2xl sm:tracking-wide"
+                  className="group relative flex w-full flex-col items-center justify-center gap-4 overflow-hidden rounded-3xl bg-gradient-to-br from-orange via-[#e66a1f] to-[#d45a0f] px-12 py-8 font-body text-xl font-bold tracking-tight text-white shadow-[0_20px_60px_rgba(251,146,60,0.5)] transition-all duration-700 hover:shadow-[0_30px_80px_rgba(251,146,60,0.6)] sm:px-16 sm:py-10 sm:text-2xl sm:tracking-wide"
                   whileHover={{ 
                     scale: 1.03,
                     y: -4,
@@ -396,9 +433,9 @@ export default function EncuestaWizard() {
                     }}
                   />
 
-                  {/* Logo with animation */}
+                  {/* Logo with animation - arriba */}
                   <motion.div
-                    className="relative h-16 w-16 flex-shrink-0 sm:h-20 sm:w-20"
+                    className="relative h-40 w-40 sm:h-[12.5rem] sm:w-[12.5rem]"
                     initial={{ opacity: 0, rotate: -180, scale: 0 }}
                     animate={{ 
                       opacity: 1, 
@@ -423,11 +460,11 @@ export default function EncuestaWizard() {
                     />
                   </motion.div>
 
-                  {/* Text with staggered animation */}
+                  {/* Text with staggered animation - debajo, centrado */}
                   <motion.span 
-                    className="relative z-10 flex items-center gap-2"
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
+                    className="relative z-10 flex items-center justify-center gap-2"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.5, duration: 0.6 }}
                   >
                     <motion.span
@@ -500,6 +537,28 @@ export default function EncuestaWizard() {
                       </button>
                     ))}
                   </div>
+                  
+                  {/* Campo de texto cuando se selecciona "Otro" */}
+                  {data.barrio === "Otro" && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.3 }}
+                      className="mt-4"
+                    >
+                      <label className="mb-2 block font-body text-sm font-medium text-primary-dark/90">
+                        Especifica el barrio:
+                      </label>
+                      <input
+                        type="text"
+                        value={data.barrioOtro}
+                        onChange={(e) => updateData("barrioOtro", e.target.value)}
+                        placeholder="Escribe el nombre del barrio"
+                        className="w-full rounded-xl border border-primary/10 bg-white/40 px-6 py-4 font-body text-primary-dark placeholder:text-primary-dark/50 focus:border-orange/50 focus:outline-none focus:ring-2 focus:ring-orange/20"
+                        autoFocus
+                      />
+                    </motion.div>
+                  )}
                 </div>
 
                 <div>
@@ -542,6 +601,7 @@ export default function EncuestaWizard() {
                       "Empleado",
                       "Independiente",
                       "Emprendedor",
+                      "Profesional",
                       "Docente / académico",
                       "Jubilado",
                       "Otro",
@@ -574,7 +634,10 @@ export default function EncuestaWizard() {
                 <button
                   onClick={handleNext}
                   disabled={
-                    !data.barrio || !data.edad || !data.ocupacion
+                    !data.barrio || 
+                    (data.barrio === "Otro" && !data.barrioOtro.trim()) ||
+                    !data.edad || 
+                    !data.ocupacion
                   }
                   className="flex-1 rounded-full bg-orange px-6 py-3 font-body font-medium text-accent-light disabled:cursor-not-allowed disabled:opacity-50"
                 >
@@ -653,6 +716,72 @@ export default function EncuestaWizard() {
 
                 <div>
                   <label className="mb-3 block font-body font-medium text-primary-dark/90">
+                    ¿Tomas café de especialidad?
+                  </label>
+                  <div className="flex flex-col gap-3 sm:flex-row sm:gap-4">
+                    {["Sí", "No"].map((respuesta) => (
+                      <button
+                        key={respuesta}
+                        onClick={() => {
+                          updateData("cafeEspecialidad", respuesta);
+                          // Si cambian a "No", limpiar el método
+                          if (respuesta === "No") {
+                            updateData("metodoEspecialidad", "");
+                          }
+                        }}
+                        className={`flex-1 rounded-xl px-6 py-3 text-sm sm:py-4 sm:text-base transition-all ${
+                          data.cafeEspecialidad === respuesta
+                            ? "border-2 border-orange/50 bg-orange/10"
+                            : "border border-primary/10 bg-white/40 hover:border-primary/20"
+                        }`}
+                      >
+                        <span className="font-body text-primary-dark">
+                          {respuesta}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Pregunta condicional sobre método de preparación */}
+                {data.cafeEspecialidad === "Sí" && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <label className="mb-3 block font-body font-medium text-primary-dark/90">
+                      ¿De qué forma preparas tu café de especialidad?
+                    </label>
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                      {[
+                        "Aeropress",
+                        "V60",
+                        "Chemex",
+                        "Prensa",
+                        "Greca",
+                        "Expreso",
+                      ].map((metodo) => (
+                        <button
+                          key={metodo}
+                          onClick={() => updateData("metodoEspecialidad", metodo)}
+                          className={`rounded-xl px-4 py-3 text-sm transition-all ${
+                            data.metodoEspecialidad === metodo
+                              ? "border-2 border-green/50 bg-green/10"
+                              : "border border-primary/10 bg-white/40 hover:border-primary/20"
+                          }`}
+                        >
+                          <span className="font-body text-primary-dark">
+                            {metodo}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  </motion.div>
+                )}
+
+                <div>
+                  <label className="mb-3 block font-body font-medium text-primary-dark/90">
                     Intensidad preferida del café
                   </label>
                   <div className="flex flex-col gap-3 sm:flex-row sm:gap-4">
@@ -670,6 +799,31 @@ export default function EncuestaWizard() {
                       >
                         <span className="font-body text-primary-dark">
                           {intensidad}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="mb-3 block font-body font-medium text-primary-dark/90">
+                    ¿Prefieres café en grano o molido?
+                  </label>
+                  <div className="flex flex-col gap-3 sm:flex-row sm:gap-4">
+                    {["En grano", "Molido", "No aplica"].map((presentacion) => (
+                      <button
+                        key={presentacion}
+                        onClick={() =>
+                          updateData("presentacionCafe", presentacion)
+                        }
+                        className={`flex-1 rounded-xl px-6 py-3 text-sm sm:py-4 sm:text-base transition-all ${
+                          data.presentacionCafe === presentacion
+                            ? "border-2 border-green/50 bg-green/10"
+                            : "border border-primary/10 bg-white/40 hover:border-primary/20"
+                        }`}
+                      >
+                        <span className="font-body text-primary-dark">
+                          {presentacion}
                         </span>
                       </button>
                     ))}
@@ -747,6 +901,7 @@ export default function EncuestaWizard() {
                     !data.frecuencia ||
                     !data.tipoCafe ||
                     !data.intensidad ||
+                    !data.presentacionCafe ||
                     !data.temperatura ||
                     !data.tipoLeche
                   }

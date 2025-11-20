@@ -1,0 +1,16 @@
+Create a square Instagram post (1080x1080px) with a dark gradient background transitioning from #0b1220 to #111827 to #020617. 
+
+Centered at the top, place a white coffee shop logo (180px height). Below it, add small uppercase text "ACERTIJO CAFÉ · MANIZALES" in light gray (#d8e1e2 at 70% opacity, 18px, wide letter spacing).
+
+Below that, display a large two-line title: "Algo está despertando en" in white (96px bold) and "Manizales." in orange #fb923c (96px bold), centered with generous spacing.
+
+Add a semi-transparent white box (950x180px, white at 5% opacity, rounded corners 28px, white border at 15% opacity) containing: small uppercase text "QUEREMOS CONOCERTE" (18px, wide spacing) and two lines "Responde una breve encuesta" and "y recibe un capuchino gratis" in white (48px).
+
+Below the box, add descriptive text in two lines: "Antes de abrir nuestras puertas," and "queremos escucharte." in light gray (42px).
+
+Center a large orange button (#fb923c, 600x100px, rounded corners 50px) with white text "Comenzar el acertijo" (48px bold).
+
+Below the button, add small text "Completa la encuesta y recibe un capuchino gratis" in light gray (28px).
+
+Style: Minimalist, elegant, modern coffee shop aesthetic. Clean typography, generous spacing, premium feel. Dark background with orange accents. All elements centered. No decorative elements, focus on readability and elegance.
+
