@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { QRCodeSVG } from "qrcode.react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 
 interface SurveyData {
   // Ubicación y datos básicos
@@ -246,7 +247,27 @@ export default function EncuestaWizard() {
       const result = await response.json();
       console.log("Datos guardados exitosamente:", result);
 
-      // Guardar código QR para mostrar
+      // Enviar correo de confirmación si la persona dejó su email
+      if (data.email && data.email.trim().length > 0) {
+        try {
+          await fetch("/api/enviar-correo", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              email: data.email.trim(),
+              code: uniqueCode,
+            }),
+          });
+        } catch (emailError) {
+          // No bloquear el flujo si el correo falla, solo registrar
+          // eslint-disable-next-line no-console
+          console.error("Error al enviar correo de confirmación:", emailError);
+        }
+      }
+
+      // Guardar código QR para mostrar en pantalla
       setQrCode(uniqueCode);
       setIsComplete(true);
       setCurrentStep(steps.length - 1);
@@ -322,100 +343,122 @@ export default function EncuestaWizard() {
         >
           {/* Intro Step - Storytelling */}
           {steps[currentStep] === "intro" && (
-            <div className="space-y-8 text-center">
+            <div className="flex min-h-[400px] items-center justify-center text-center sm:min-h-[500px]">
               <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2, duration: 0.6 }}
-                className="space-y-6"
-              >
-                <p
-                  className="text-sm font-body uppercase tracking-[0.18em] sm:text-base"
-                  style={{ color: "#1a365c", opacity: 0.8 }}
-                >
-                  Hay momentos que comienzan en silencio…
-                </p>
-                <div className="space-y-5 text-left sm:space-y-6">
-                  <p className="font-body text-base leading-relaxed text-primary-dark/90 sm:text-lg md:text-xl">
-                    Una idea que se tuesta despacio, que se mueve entre aromas intensos y decisiones cuidadosas. Algo nuevo está despertando en Manizales. Algo creado a partir de pasión, técnica y una obsesión por el buen café.
-                  </p>
-                  <p className="font-body text-base leading-relaxed text-primary-dark/90 sm:text-lg md:text-xl">
-                    En <span className="font-semibold">Acertijo Café</span> creemos que las mejores experiencias empiezan escuchando. Queremos conocer a quienes, como nosotros, encuentran en una taza un ritual, un refugio o un impulso. Por eso, antes de abrir nuestras puertas, queremos abrir una conversación contigo.
-                  </p>
-                  <p className="font-body text-base leading-relaxed text-primary-dark/90 sm:text-lg md:text-xl">
-                    No diremos mucho todavía —parte de la magia está en el misterio— pero sí podemos adelantarte esto: estamos construyendo un espacio pensado para la ciudad, para tu rutina, para tu forma de disfrutar el café. Un lugar donde cada detalle tiene intención.
-                  </p>
-                  <p className="font-body text-base leading-relaxed text-primary-dark/90 sm:text-lg md:text-xl">
-                    Si estás aquí, es porque queremos que seas parte de los primeros en descubrir lo que viene. Tu opinión nos ayudará a diseñar una experiencia que realmente valga la pena. Solo te tomará unos minutos y, como agradecimiento, tendrás un capuchino de cortesía para disfrutar en nuestra apertura.
-                  </p>
-                </div>
-              </motion.div>
-
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.5, duration: 0.6 }}
-                className="flex justify-center pt-4 sm:pt-6"
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+                className="w-full max-w-lg"
               >
                 <motion.button
                   onClick={handleNext}
-                  className="group relative w-full max-w-sm overflow-hidden rounded-full bg-orange px-8 py-4 font-body text-base font-semibold tracking-wide text-white shadow-lg shadow-orange/30 transition-all duration-300 hover:shadow-xl hover:shadow-orange/40 sm:w-auto sm:px-12 sm:py-5 sm:text-lg"
-                  whileHover={{ scale: 1.02, y: -2 }}
+                  className="group relative flex w-full items-center justify-center gap-5 overflow-hidden rounded-3xl bg-gradient-to-br from-orange via-[#e66a1f] to-[#d45a0f] px-12 py-8 font-body text-xl font-bold tracking-tight text-white shadow-[0_20px_60px_rgba(251,146,60,0.5)] transition-all duration-700 hover:shadow-[0_30px_80px_rgba(251,146,60,0.6)] sm:px-16 sm:py-10 sm:text-2xl sm:tracking-wide"
+                  whileHover={{ 
+                    scale: 1.03,
+                    y: -4,
+                    transition: { duration: 0.3 }
+                  }}
                   whileTap={{ scale: 0.98 }}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.7, duration: 0.5 }}
                 >
-                  {/* Efecto de brillo animado */}
+                  {/* Animated background gradient */}
                   <motion.div
-                    className="absolute inset-0 bg-gradient-to-r from-transparent via-white/25 to-transparent"
-                    animate={{
-                      x: ['-100%', '100%'],
+                    className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent"
+                    animate={{ 
+                      x: ["-200%", "200%"],
+                      rotate: [0, 180]
                     }}
                     transition={{
-                      duration: 2.5,
-                      repeat: Infinity,
-                      repeatDelay: 2,
-                      ease: "easeInOut",
+                      x: {
+                        duration: 3,
+                        repeat: Infinity,
+                        repeatDelay: 1.5,
+                        ease: "easeInOut"
+                      },
+                      rotate: {
+                        duration: 8,
+                        repeat: Infinity,
+                        ease: "linear"
+                      }
                     }}
                   />
                   
-                  {/* Efecto de pulso sutil alrededor */}
+                  {/* Pulsing glow effect */}
                   <motion.div
-                    className="absolute inset-0 rounded-full border-2 border-white/30"
+                    className="absolute inset-0 rounded-3xl bg-white/20"
                     animate={{
-                      scale: [1, 1.05, 1],
-                      opacity: [0.4, 0.7, 0.4],
+                      opacity: [0.3, 0.6, 0.3],
+                      scale: [1, 1.1, 1]
                     }}
                     transition={{
                       duration: 2,
                       repeat: Infinity,
-                      ease: "easeInOut",
+                      ease: "easeInOut"
                     }}
                   />
-                  
-                  <span className="relative z-10 inline-flex items-center gap-2">
-                    Comienza el acertijo
-                    <motion.svg
-                      className="h-5 w-5"
-                      viewBox="0 0 24 24"
-                      fill="none"
+
+                  {/* Logo with animation */}
+                  <motion.div
+                    className="relative h-16 w-16 flex-shrink-0 sm:h-20 sm:w-20"
+                    initial={{ opacity: 0, rotate: -180, scale: 0 }}
+                    animate={{ 
+                      opacity: 1, 
+                      rotate: 0, 
+                      scale: 1 
+                    }}
+                    transition={{ 
+                      delay: 0.3,
+                      duration: 0.8,
+                      ease: [0.34, 1.56, 0.64, 1]
+                    }}
+                    whileHover={{
+                      rotate: [0, -10, 10, -10, 0],
+                      transition: { duration: 0.5 }
+                    }}
+                  >
+                    <Image
+                      src="/SimboloBlanco.svg"
+                      alt="Acertijo Café"
+                      fill
+                      className="object-contain drop-shadow-lg"
+                    />
+                  </motion.div>
+
+                  {/* Text with staggered animation */}
+                  <motion.span 
+                    className="relative z-10 flex items-center gap-2"
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.5, duration: 0.6 }}
+                  >
+                    <motion.span
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 0.6 }}
+                    >
+                      Resolver el acertijo
+                    </motion.span>
+                    <motion.span
+                      className="inline-block"
                       animate={{ x: [0, 4, 0] }}
                       transition={{
                         duration: 1.5,
                         repeat: Infinity,
-                        ease: "easeInOut",
+                        ease: "easeInOut"
                       }}
                     >
-                      <path
-                        d="M13 7L18 12L13 17M6 7L11 12L6 17"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </motion.svg>
-                  </span>
+                      →
+                    </motion.span>
+                  </motion.span>
+
+                  {/* Shimmer effect on hover */}
+                  <motion.div
+                    className="absolute inset-0 -skew-x-12 bg-gradient-to-r from-transparent via-white/40 to-transparent opacity-0 group-hover:opacity-100"
+                    initial={{ x: "-100%" }}
+                    whileHover={{
+                      x: "200%",
+                      transition: { duration: 0.6 }
+                    }}
+                  />
                 </motion.button>
               </motion.div>
             </div>
@@ -500,6 +543,7 @@ export default function EncuestaWizard() {
                       "Independiente",
                       "Emprendedor",
                       "Docente / académico",
+                      "Jubilado",
                       "Otro",
                     ].map((ocupacion) => (
                       <button
